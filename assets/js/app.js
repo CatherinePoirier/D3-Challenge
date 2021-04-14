@@ -19,7 +19,7 @@ var height = svgHeight - margin.top - margin.bottom;
 // Create an SVG wrapper, append an SVG group that will hold our chart,
 // and shift the latter by left and top margins.
 var svg = d3
-  .select(".chart")
+  .select("#scatter")
   .append("svg")
   .attr("width", svgWidth)
   .attr("height", svgHeight);
@@ -66,6 +66,15 @@ function renderCircles(circlesGroup, newXScale, chosenXAxis) {
   return circlesGroup;
 }
 
+function renderTexts(textsGroup, newXScale, chosenXAxis) {
+
+  textsGroup.transition()
+    .duration(1000)
+    .attr("dx", d => newXScale(d[chosenXAxis]));
+
+  return textsGroup;
+}
+
 // function used for updating circles group with new tooltip
 function updateToolTip(chosenXAxis, circlesGroup) {
 
@@ -82,6 +91,7 @@ function updateToolTip(chosenXAxis, circlesGroup) {
     .attr("class", "tooltip")
     .offset([80, -60])
     .html(function(d) {
+      // return (`${d.state}<br>${label} ${d[chosenXAxis]}`);
       return (`${d.state}<br>${label} ${d[chosenXAxis]}`);
     });
 
@@ -99,6 +109,10 @@ function updateToolTip(chosenXAxis, circlesGroup) {
 }
 
 // Retrieve data from the CSV file and execute everything below
+// d3.csv("assets/data/data.csv").then(function(data){
+    // console.log(data)
+    // })   // data is an array of "state" objects
+      
 d3.csv("assets/data/data.csv").then(function(hcdata, err) {
   if (err) throw err;
 
@@ -107,6 +121,7 @@ d3.csv("assets/data/data.csv").then(function(hcdata, err) {
     data.age = +data.age;
     data.obesity = +data.obesity;
     data.income = +data.income;
+    // data.abbr = +data.abbr;
   });
 
   // xLinearScale function above csv import
@@ -135,13 +150,27 @@ d3.csv("assets/data/data.csv").then(function(hcdata, err) {
   var circlesGroup = chartGroup.selectAll("circle")
     .data(hcdata)
     .enter()
-    .append("circle")
+     .append("circle")
     .attr("cx", d => xLinearScale(d[chosenXAxis]))
     .attr("cy", d => yLinearScale(d.obesity))
     .attr("r", 20)
     .attr("fill", "pink")
     .attr("opacity", ".5");
-
+//==========================================================
+    var textsGroup = chartGroup.selectAll('.stateText')
+    // var textgroup = chartGroup.selectAll('text')
+      .data(hcdata)
+      .enter()
+      .append("text")
+      .attr("dx", d => xLinearScale(d[chosenXAxis]))
+      //.attr("cx", d => xLinearScale(d.age))
+      .attr("dy", d => yLinearScale(d.obesity))
+      .text(d=>d["abbr"]);
+      // .text(d=>(d));
+  
+   
+    
+//=============================================================
   // Create group for two x-axis labels
   var labelsGroup = chartGroup.append("g")
     .attr("transform", `translate(${width / 2}, ${height + 20})`);
@@ -193,6 +222,9 @@ d3.csv("assets/data/data.csv").then(function(hcdata, err) {
 
         // updates circles with new x values
         circlesGroup = renderCircles(circlesGroup, xLinearScale, chosenXAxis);
+
+        // updates circles with new x values
+        textsGroup = renderTexts(textsGroup, xLinearScale, chosenXAxis);
 
         // updates tooltips with new info
         circlesGroup = updateToolTip(chosenXAxis, circlesGroup);
